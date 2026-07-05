@@ -1,0 +1,15 @@
+# Wickra Exchange
+
+> One typed API across ten crypto exchanges — unified market data and signed order execution, in ten languages, built on the Wickra core. A single compile-time-typed `Exchange` trait spans the ten largest venues, with the same surface exposed to Rust, Python, Node, C, C++, C#, Go, Java, and R over a C ABI.
+
+Wickra Exchange implements one typed `Exchange` trait in Rust and re-exports it to Python (PyO3), Node (napi-rs), and — via a C ABI (cbindgen) — C, C++, C#, Go, Java, and R. It covers spot and derivatives across Binance, OKX, Bybit, Coinbase, Upbit, Bitget, Gate.io, Kraken, KuCoin, and HTX: market data, order lifecycle, derivatives (positions/leverage/margin), extended ops (batch/OCO), and private WebSocket user-data + execution streams. Released under the MIT OR Apache-2.0 license.
+
+## Source and packages
+- [GitHub](https://github.com/wickra-lib/wickra-exchange): Source, issues, and releases.
+- [crates.io](https://crates.io/crates/wickra-exchange): Rust crate.
+- [PyPI](https://pypi.org/project/wickra-exchange/): Python package.
+- [npm](https://www.npmjs.com/package/wickra-exchange): Node package.
+
+## Ecosystem
+- [Wickra](https://wickra.org): The core streaming-indicator library the exchange client is built on.
+- [Docs](https://docs.wickra.org): Documentation for the Wickra core.
