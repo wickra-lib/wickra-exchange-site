@@ -22,4 +22,13 @@ exclude = [
   'wickra\.org/\$(\{|%7B)path',
   'crates\.io/crates/',
   'www\.npmjs\.com/package/',
+  # wickra-exchange is not published to any registry yet; these resolve once the
+  # first release lands. Excluded so the scheduled link check stays green until
+  # then. Remove on release.
+  'pypi\.org/project/wickra-exchange',
+  'nuget\.org/packages/WickraExchange',
+  'central\.sonatype\.com/artifact/org\.wickra/wickra-exchange',
+  'pkg\.go\.dev/github\.com/wickra-lib/wickra-exchange-go',
+  'docs\.rs/wickra-exchange',
+  'wickra-lib\.r-universe\.dev',
 ]
