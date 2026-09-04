@@ -21,6 +21,34 @@
     "height": 20
   },
   {
+    "alt": "crates.io",
+    "href": "https://crates.io/crates/wickra-exchange",
+    "file": "/badges/crates.svg",
+    "width": 119,
+    "height": 20
+  },
+  {
+    "alt": "PyPI",
+    "href": "https://pypi.org/project/wickra-exchange/",
+    "file": "/badges/pypi.svg",
+    "width": 95,
+    "height": 20
+  },
+  {
+    "alt": "npm",
+    "href": "https://www.npmjs.com/package/wickra-exchange",
+    "file": "/badges/npm.svg",
+    "width": 97,
+    "height": 20
+  },
+  {
+    "alt": "Maven Central",
+    "href": "https://central.sonatype.com/artifact/org.wickra/wickra-exchange",
+    "file": "/badges/maven.svg",
+    "width": 153,
+    "height": 20
+  },
+  {
     "alt": "License: MIT OR Apache-2.0",
     "href": "https://github.com/wickra-lib/wickra-exchange#license",
     "file": "/badges/license.svg",
