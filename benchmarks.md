@@ -1,189 +1,116 @@
 ---
 title: Benchmarks
-description: Wickra vs. the Python TA ecosystem (finta, talipp) and the other Rust TA crates (kand, ta-rs, yata) across batch and streaming workloads — reproducible on your own hardware via the bench scripts.
+description: "Connectivity throughput is dominated by the network, not by CPU, so the benchmarks here measure the CPU-bound work the library does per request — the parts that must not become…"
 ---
-
-<script setup>
-// Full Python batch field, measured in one Python 3.12 run alongside Wickra.
-const batch = [
-  { label: 'SMA(20)',           wickra: 22.2,  peers: [{ name: 'TA-Lib', value: 15.6 }, { name: 'tulipy', value: 15.9 }, { name: 'pandas-ta', value: 32.7 },  { name: 'finta', value: 290.1 }]  },
-  { label: 'EMA(20)',           wickra: 30.5,  peers: [{ name: 'TA-Lib', value: 30.4 }, { name: 'tulipy', value: 30.9 }, { name: 'pandas-ta', value: 46.7 },  { name: 'finta', value: 198.5 }]  },
-  { label: 'RSI(14)',           wickra: 52.3,  peers: [{ name: 'TA-Lib', value: 72.0 }, { name: 'tulipy', value: 34.2 }, { name: 'pandas-ta', value: 88.8 },  { name: 'finta', value: 812.3 }]  },
-  { label: 'MACD(12,26,9)',     wickra: 129.8, peers: [{ name: 'TA-Lib', value: 111.1 }, { name: 'tulipy', value: 38.4 }, { name: 'pandas-ta', value: 286.8 }, { name: 'finta', value: 716.7 }]  },
-  { label: 'Bollinger(20,2.0)', wickra: 87.2,  peers: [{ name: 'TA-Lib', value: 74.6 }, { name: 'tulipy', value: 37.9 }, { name: 'pandas-ta', value: 474.3 }, { name: 'finta', value: 1255.5 }] },
-  { label: 'ATR(14)',           wickra: 74.7,  peers: [{ name: 'TA-Lib', value: 87.3 }, { name: 'tulipy', value: 35.5 }, { name: 'pandas-ta', value: null },  { name: 'finta', value: 3496.4 }] },
-]
-
-// Python streaming: Wickra vs talipp, the only other incremental peer. The
-// recompute-on-every-tick libraries (TA-Lib/tulipy/pandas-ta/finta) are
-// 2 800–19 000× slower here — too far off-scale for a bar, covered in prose.
-const streaming = [
-  { label: 'SMA(20)',           wickra: 0.089, unit: 'µs / tick', peers: [{ name: 'talipp', value: 0.959 }] },
-  { label: 'EMA(20)',           wickra: 0.111, unit: 'µs / tick', peers: [{ name: 'talipp', value: 1.187 }] },
-  { label: 'RSI(14)',           wickra: 0.061, unit: 'µs / tick', peers: [{ name: 'talipp', value: 0.949 }] },
-  { label: 'MACD(12,26,9)',     wickra: 0.079, unit: 'µs / tick', peers: [{ name: 'talipp', value: 3.298 }] },
-  { label: 'Bollinger(20,2.0)', wickra: 0.089, unit: 'µs / tick', peers: [{ name: 'talipp', value: 4.967 }] },
-]
-
-// Rust core vs Rust crates, no language-binding overhead. Per-tick in ns.
-const rustStream = [
-  { label: 'SMA(20)',           wickra: 50,  unit: 'ns', peers: [{ name: 'kand', value: 38 },  { name: 'ta-rs', value: 47 },  { name: 'yata', value: 38 }]   },
-  { label: 'EMA(20)',           wickra: 154, unit: 'ns', peers: [{ name: 'kand', value: 69 },  { name: 'ta-rs', value: 56 },  { name: 'yata', value: 69 }]   },
-  { label: 'RSI(14)',           wickra: 164, unit: 'ns', peers: [{ name: 'kand', value: 216 }, { name: 'ta-rs', value: 74 },  { name: 'yata', value: null }] },
-  { label: 'MACD(12,26,9)',     wickra: 275, unit: 'ns', peers: [{ name: 'kand', value: 143 }, { name: 'ta-rs', value: 66 },  { name: 'yata', value: null }] },
-  { label: 'Bollinger(20,2.0)', wickra: 128, unit: 'ns', peers: [{ name: 'kand', value: 248 }, { name: 'ta-rs', value: 168 }, { name: 'yata', value: null }] },
-  { label: 'ATR(14)',           wickra: 152, unit: 'ns', peers: [{ name: 'kand', value: 166 }, { name: 'ta-rs', value: 61 },  { name: 'yata', value: null }] },
-]
-const rustBatch = [
-  { label: 'SMA(20)',           wickra: 53,  peers: [{ name: 'kand', value: 41 }]  },
-  { label: 'EMA(20)',           wickra: 111, peers: [{ name: 'kand', value: 71 }]  },
-  { label: 'RSI(14)',           wickra: 221, peers: [{ name: 'kand', value: 259 }] },
-  { label: 'MACD(12,26,9)',     wickra: 533, peers: [{ name: 'kand', value: 327 }] },
-  { label: 'Bollinger(20,2.0)', wickra: 404, peers: [{ name: 'kand', value: 460 }] },
-  { label: 'ATR(14)',           wickra: 122, peers: [{ name: 'kand', value: 169 }] },
-]
-</script>
 
 # Benchmarks
 
-Wickra is a **streaming-first** library: the state machine inside every
-indicator takes a single new tick and returns its updated output in constant
-time. The charts below show what that costs against the full Python TA ecosystem
-and the other Rust crates — wins **and** losses, the same figures the
-[project README](https://github.com/wickra-lib/wickra#benchmarks) carries.
-Each bar is normalised to the slowest in its group, so the shortest bar is the
-fastest library; the value to the right is the measured number.
-
-::: tip Choosing a language? Jump to per-binding throughput
-All 10 bindings call the same verified Rust core, but the cost of crossing each
-language's FFI boundary differs by orders of magnitude on streaming workloads.
-See [**Per-binding throughput**](#_3-—-per-binding-throughput) to pick the binding
-that keeps up with your hot loop (Rust / C / C++ / C# are near-core; R is the
-outlier).
+::: tip Looking for the indicator library's numbers?
+This page is about Wickra Exchange. Wickra's own indicator benchmarks — the
+comparison against TA-Lib, talipp, pandas-ta and the other Rust TA crates —
+live at [wickra.org](https://wickra.org/benchmarks).
 :::
 
-::: tip Reproduce these on your own hardware
-```bash
-# Python — vs talipp / TA-Lib / tulipy / pandas-ta / finta
-pip install -e bindings/python[bench]
-python -m benchmarks.compare_libraries
+Connectivity throughput is dominated by the network, not by CPU, so the
+benchmarks here measure the **CPU-bound work the library does per request** —
+the parts that must not become a bottleneck under load — not round-trip latency
+to an exchange (which is not reproducible and not ours to measure).
 
-# Rust core — vs kand / ta-rs / yata
-cargo bench -p wickra-bench
+## What is measured
+
+The `wickra-exchange-bench` crate (criterion) covers:
+
+- **Request signing** — HMAC-SHA256 / HMAC-SHA512 / JWT signature construction
+  per signing family, in signatures per second.
+- **Response parsing** — deserialising recorded REST/WS payloads into the typed
+  structs, in messages per second.
+- **Filter rounding** — rounding a price/quantity to an exchange's
+  lot/tick/min-notional filters with `Decimal`, in operations per second.
+- **Order-book diff apply** — applying a depth diff to the local L2 book and
+  detecting sequence gaps, in updates per second.
+
+## Methodology
+
+Run on a single core against fixed, representative in-process inputs, so the
+numbers are reproducible and contain no network variance:
+
+```bash
+cargo bench -p wickra-exchange-bench
 ```
 
-The Python script auto-detects every peer library installed in your venv. The
-nightly `cross-library-bench` workflow runs both suites on a Linux runner and
-uploads the raw reports as artefacts.
-:::
+## Results
 
-## 1. Streaming — the structural win
+Measured with `cargo bench -p wickra-exchange-bench` (criterion, 100 samples per
+benchmark) on an AMD Ryzen 9 9950X, single-threaded. Figures are the median
+estimate; treat them as orders of magnitude, not guarantees — they will vary with
+CPU and toolchain.
 
-Live trading feeds one tick at a time. Wickra updates every indicator in
-**O(1)**; batch-only libraries (TA-Lib, tulipy, finta, pandas-ta) have no
-incremental API and must recompute the whole history on every tick. Only
-`talipp` (Python) and `ta-rs` / `yata` (Rust) carry real per-tick state. This is
-the gap the library was built to expose.
+| Group      | Operation                          | Median   | Throughput      |
+|------------|------------------------------------|----------|-----------------|
+| signing    | `hmac_sha256_hex` (signed query)   | 2.15 µs  | ~465 K/s        |
+| signing    | `hmac_sha512_hex`                  | 1.59 µs  | ~627 K/s        |
+| signing    | `sha256` (raw digest)              | 570 ns   | ~1.75 M/s       |
+| parse      | `parse_decimal`                    | 20.8 ns  | ~48 M/s         |
+| parse      | `format_decimal`                   | 128 ns   | ~7.8 M/s        |
+| parse      | `event_from_json` (trade frame)    | 846 ns   | ~1.18 M/s       |
+| filter     | `round_quantity` (floor to step)   | 39.0 ns  | ~25 M/s         |
+| filter     | `round_price` (floor to tick)      | 32.2 ns  | ~31 M/s         |
+| orderbook  | `apply_snapshot` (50 levels/side)  | 3.62 µs  | ~276 K/s        |
+| orderbook  | `apply_delta` (10 levels/side)     | 2.72 ns  | ~368 M/s        |
 
-**Python — per-tick latency** (seed 5 000 bars, then feed ticks one at a time):
+The takeaway: every hot path is comfortably faster than any exchange's rate limit
+(signing a request costs ~2 µs, parsing a frame ~0.8 µs), so the library never
+becomes the bottleneck — the network and the venue's limits do.
 
-<BenchmarkBar :rows="streaming" />
+## What a binding costs
 
-Against the only other incremental Python peer Wickra is **11–56× faster**;
-against the recompute-on-every-tick libraries it is **2 800–19 000× faster**
-(`finta` RSI hits 19 000×). tulipy / pandas-ta land in the same recompute band
-as TA-Lib — too far off-scale to chart next to a sub-microsecond bar.
+The figures above measure the library's own work. They say nothing about what it
+costs to *reach* that work from another language — and a binding is a boundary:
+marshalling a string, projecting a struct, crossing an FFI or an interpreter.
+None of that appeared anywhere, in any language, however thin the bindings were
+described as being.
 
-**Rust — per-tick latency** (whole 50 000-bar series, lower = faster):
+`benchmarks/` runs the same two operations in every language against the same
+offline paper account: `ticker`, which is almost entirely the crossing itself,
+and `place_order`, which is real work on both sides of it. Same machine, same
+20 000 iterations after a 1 000-call warm-up.
 
-<BenchmarkBar :rows="rustStream" :decimals="0" />
+| Language | `ticker` | `place_order` | overhead per order |
+|----------|---------:|--------------:|-------------------:|
+| **Rust** (in-process, the baseline) | 62 ns | 824 ns | — |
+| C (the ABI itself) | 188 ns | 1 254 ns | +0.4 µs |
+| C# | 448 ns | 1 385 ns | +0.6 µs |
+| Go | 400 ns | 1 553 ns | +0.7 µs |
+| Python | 556 ns | 1 533 ns | +0.7 µs |
+| Node.js | 1 467 ns | 2 669 ns | +1.8 µs |
+| R | 1 373 ns | 3 203 ns | +2.4 µs |
+| Java | 1 471 ns | 3 150 ns | +2.3 µs |
 
-`ta-rs` hands back a bare `f64` from the first tick with no warmup and no
-validation; it leads several rows by giving those guarantees up. Against `kand`,
-Wickra wins streaming **RSI, Bollinger and ATR**. `yata` exposes only SMA/EMA as
-raw-value methods, so its other rows are omitted rather than faked.
+Read across the `ticker` column and the boundary is visible on its own: the C ABI
+costs about 130 ns over an in-process call, and each language adds its own
+marshalling on top of that. Read the `place_order` column and it is in
+proportion: the work is the same everywhere, and the crossing is a share of it.
 
-## 2. Batch — competitive, not the headline
+**This is not a ranking of the languages.** One exchange round trip costs on the
+order of a millisecond — roughly a thousand times the widest gap in this table —
+and every venue's rate limit is far below what even the slowest binding here can
+produce. The number that matters is the last column: the most a binding adds to
+an order is about three microseconds, so the choice of language is a choice about
+the code you want to write, not about throughput.
 
-Whole series in one call. This is **not** the headline: hand-tuned C (`tulipy`,
-TA-Lib) and the leanest crate (`kand`) win the simple recurrences, and we show
-the full field rather than cherry-pick. Wickra trades a few µs per pass for the
-`None`-warmup, NaN-safety and bit-exact `batch == streaming` guarantees none of
-them keep — yet it still beats `pandas-ta` and `finta` on every row, and TA-Lib
-on RSI and ATR.
+WASM is deliberately absent: it carries the offline simulators and no venue
+client, and what a call into WebAssembly costs is a property of the browser's
+engine rather than of this library.
 
-**Python** (20 000-bar pass, µs/op, lower = faster):
+## Caveats
 
-<BenchmarkBar :rows="batch" :decimals="1" />
+These figures bound the library's own overhead only. End-to-end latency in a live
+deployment is dominated by exchange round-trip time, rate-limit pacing and your
+network path — none of which these benchmarks capture.
 
-> All five libraries are measured in the **same Python 3.12 run** as Wickra (no
-> CI-vs-desktop mix). tulipy's SIMD C and TA-Lib lead the simple recurrences;
-> `pandas-ta` and `finta` trail across the board. talipp is excluded from the
-> batch chart on purpose — it is streaming-first, so re-instantiating it for a
-> full batch pass is not a like-for-like comparison.
+The binding figures were measured on one machine (Windows, AMD Ryzen 9 9950X)
+with each language's own release toolchain. They will move with the toolchain and
+the platform; the shape of the table — a hundred-nanosecond boundary, a
+microsecond or two of marshalling — is the part that travels.
 
-**Rust** (50 000-bar pass, µs, lower = faster). Only Wickra and `kand` expose a
-batch API; `ta-rs` and `yata` are streaming-only:
-
-<BenchmarkBar :rows="rustBatch" :decimals="0" />
-
-Wickra wins **RSI, Bollinger and ATR** outright and trades a few µs on the simple
-recurrences for the warmup/NaN guarantees. Its real edge is breadth (514
-indicators) and O(1) streaming across ten languages, not winning every
-micro-benchmark — the
-[project README](https://github.com/wickra-lib/wickra#benchmarks) carries the
-same tables.
-
-## 3 — Per-binding throughput
-
-The sections above compare Wickra against other libraries — which only exist for
-Python and Rust. Every binding calls the **same** Rust core, so this last table
-is **not** a speed claim: it measures the raw cost of crossing each language's
-FFI boundary, in million updates per second (Mupd/s), for `SMA(20)` over 200 000
-bars (median of 3, same machine as above).
-
-| Target               | streaming (Mupd/s) | batch (Mupd/s) |
-|----------------------|-------------------:|---------------:|
-| Rust core (no FFI)   |                380 |            498 |
-| C / C++              |                365 |            358 |
-| C#                   |                348 |            259 |
-| Python               |                 31 |             46 |
-| Java                 |                 38 |            173 |
-| Go                   |                 23 |            394 |
-| WASM                 |                 21 |            169 |
-| Node.js              |                 16 |              9 |
-| R                    |                0.1 |            279 |
-
-Streaming spans three orders of magnitude — the raw C ABI (365) sits just under
-the FFI-free Rust ceiling (380), while R's per-call interpreter overhead makes
-streaming ~2800× slower than its own batch. The single `batch` crossing stays
-high for the bindings that return a contiguous buffer; the low outliers are Node
-(its napi `batch` boxes every element into a JS `Array`) and Python (a stdlib
-`array.array` copy, now that NumPy is optional). Reproduce with
-the per-binding `throughput` scripts — see
-[BENCHMARKS.md §3](https://github.com/wickra-lib/wickra/blob/main/BENCHMARKS.md).
-
-## What the numbers do **not** say
-
-- Absolute µs values depend on CPU, memory clock, OS scheduler, and the
-  Python / Node.js / Rust versions — read them as **relative speedups** between
-  libraries on identical input, not as a universal performance contract.
-- Reproduced on: Windows 11 Pro 26200, AMD Ryzen 9 9950X, 64 GB DDR5,
-  Rust 1.92 (release profile, `lto = "fat"`, `codegen-units = 1`), Python 3.12.
-- The Python Wickra figures are the **Python binding** runtime, not the bare
-  Rust kernel — a small PyO3 boundary cost is included on each measurement.
-
-## See also
-
-- [`benchmarks/compare_libraries.py`](https://github.com/wickra-lib/wickra/blob/main/bindings/python/benchmarks/compare_libraries.py)
-  — the canonical Python script.
-- [`crates/wickra-bench`](https://github.com/wickra-lib/wickra/tree/main/crates/wickra-bench)
-  — the Rust cross-library benchmark harness.
-- [Bench workflow](https://github.com/wickra-lib/wickra/actions/workflows/bench.yml)
-  — nightly run on the GitHub-hosted Linux runner, archived as build artefacts.
-- [BENCHMARKS.md §3](https://github.com/wickra-lib/wickra/blob/main/BENCHMARKS.md)
-  — per-binding throughput benchmarks: raw updates/sec for each language binding
-  (C, C++, C#, Go, Java, Python, R, WASM, plus the Rust core baseline). These measure
-  each binding's FFI overhead, not the cross-library comparison shown above.
-- [Streaming-vs-Batch (docs)](https://docs.wickra.org/Streaming-vs-Batch)
-  — what the equivalence guarantee actually means.
+The numbers above are the ones in the repository's [`BENCHMARKS.md`](https://github.com/wickra-lib/wickra-exchange/blob/main/BENCHMARKS.md), measured with the commands it names.

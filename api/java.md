@@ -8,7 +8,7 @@ fills through the wickra-backtest engine behind the trait a live venue uses.
 <dependency>
   <groupId>org.wickra</groupId>
   <artifactId>wickra-exchange</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.5</version>
 </dependency>
 ```
 
