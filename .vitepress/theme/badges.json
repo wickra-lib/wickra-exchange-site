@@ -73,7 +73,7 @@
     "alt": "License: MIT OR Apache-2.0",
     "href": "https://github.com/wickra-lib/wickra-exchange#license",
     "file": "/badges/license.svg",
-    "width": 164,
+    "width": 166,
     "height": 20
   },
   {
@@ -94,7 +94,7 @@
     "alt": "Build provenance",
     "href": "https://github.com/wickra-lib/wickra-exchange/attestations",
     "file": "/badges/provenance.svg",
-    "width": 147,
+    "width": 146,
     "height": 20
   },
   {
