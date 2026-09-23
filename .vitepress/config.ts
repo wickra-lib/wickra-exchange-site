@@ -130,7 +130,7 @@ export default defineConfig({
         ],
       },
       {
-        text: 'v0.1.6',
+        text: 'v0.1.7',
         items: [
           { text: 'Release notes', link: 'https://github.com/wickra-lib/wickra-exchange/releases' },
           { text: 'Changelog', link: 'https://github.com/wickra-lib/wickra-exchange/blob/main/CHANGELOG.md' },
