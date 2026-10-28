@@ -39,7 +39,7 @@ features:
     details: PaperExchange is a first-class Exchange that simulates fills through the wickra-backtest engine. The same strategy runs paper ↔ live by swapping the implementation — nothing else changes.
   - icon: 📈
     title: Microstructure-native
-    details: "Funding, open interest, liquidations and long/short ratio arrive as the exact typed shapes wickra-core consumes (DerivativesTick, OrderBook, TradePrint, CrossSection) — feeding 514 indicators and the backtester with zero glue."
+    details: "Funding, open interest, liquidations and long/short ratio arrive as the exact typed shapes wickra-core consumes (DerivativesTick, OrderBook, TradePrint, CrossSection) — feeding 515 indicators and the backtester with zero glue."
 ---
 
 <script setup>
@@ -126,7 +126,7 @@ implementation — no key, no network, same code.
 Wickra Exchange is part of the [Wickra](https://wickra.org) ecosystem. Its
 microstructure feeds — funding, open interest, liquidations, long/short ratio —
 arrive as the exact typed shapes [`wickra-core`](https://github.com/wickra-lib/wickra)
-consumes, so the same data drives 514 streaming indicators, the backtester, and
+consumes, so the same data drives 515 streaming indicators, the backtester, and
 live execution with zero glue.
 
 > ⚠️ **Real orders move real money.** Every signed-execution path is
